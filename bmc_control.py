@@ -1,11 +1,11 @@
-# Codigo principal para control de  maquina virtual 
 import libvirt
 import sys
 import logging
+from pyghmi.ipmi.events import EventLog 
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - BMC_SIM - %(levelname)s - %(message)s',
+    format='%(asctime)s - BMC_SIM_PYGHMI - %(levelname)s - %(message)s',
     filename='bmc_operations.log'
 )
 
@@ -14,6 +14,7 @@ class BMC_Simulator:
         self.vm_name = vm_name
         self.uri = "qemu:///system"
         self.conn = self._connect()
+        self.event_log = EventLog()
 
     def _connect(self):
         try:
@@ -35,30 +36,30 @@ class BMC_Simulator:
             state, _ = dom.state()
             if state == libvirt.VIR_DOMAIN_RUNNING:
                 print("Chassis Power is on")
-                logging.info("Estado consultado: ON")
+                logging.info("IPMI Query: Power State ON")
             else:
                 print("Chassis Power is off")
-                logging.info("Estado consultado: OFF")
+                logging.info("IPMI Query: Power State OFF")
 
     def power_on(self):
         dom = self._get_domain()
         if dom:
             try:
                 dom.create()
-                print(f"Comando IPMI: Power ON enviado a {self.vm_name}")
-                logging.info("Operación: Encendido exitoso")
+                print(f"IPMI Command: [Chassis Control On] sent to {self.vm_name}")
+                logging.info("IPMI Action: Power ON sequence initiated")
             except libvirt.libvirtError as e:
-                print(f"Fallo al encender: {e}")
+                print(f"Error: {e}")
 
     def power_off(self):
         dom = self._get_domain()
         if dom:
             try:
                 dom.destroy()
-                print(f"Comando IPMI: Power OFF (forced) enviado a {self.vm_name}")
-                logging.info("Operación: Apagado exitoso")
+                print(f"IPMI Command: [Chassis Control Off] sent to {self.vm_name}")
+                logging.info("IPMI Action: Power OFF (Immediate/Forced)")
             except libvirt.libvirtError as e:
-                print(f"Fallo al apagar: {e}")
+                print(f"Error: {e}")
 
 if __name__ == "__main__":
     bmc = BMC_Simulator("rocky9")
